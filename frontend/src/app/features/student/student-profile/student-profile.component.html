@@ -1,0 +1,307 @@
+<div class="student-profile-container">
+  <h1 class="page-title">Profil Étudiant</h1>
+  
+  <mat-card *ngIf="isAdmin" class="search-card">
+    <mat-card-header>
+      <mat-card-title>Rechercher un étudiant</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="searchForm" (ngSubmit)="searchStudents()" class="search-form">
+        <div class="search-row">
+          <mat-form-field appearance="outline" class="search-field">
+            <mat-label>Rechercher par nom, prénom ou INE</mat-label>
+            <input matInput formControlName="query" placeholder="Ex: Diop, 12345, ...">
+            <mat-error *ngIf="searchForm.get('query')?.hasError('required')">
+              Veuillez saisir un critère de recherche
+            </mat-error>
+          </mat-form-field>
+          
+          <button mat-raised-button color="primary" type="submit" [disabled]="searchForm.invalid || searching">
+            <mat-icon>search</mat-icon> Rechercher
+          </button>
+        </div>
+      </form>
+      
+      <div *ngIf="searching" class="spinner-container">
+        <mat-spinner diameter="30"></mat-spinner>
+      </div>
+      
+      <div *ngIf="searchResults.length > 0" class="search-results">
+        <mat-card *ngFor="let student of searchResults" class="result-card" (click)="selectStudent(student.id)">
+          <mat-card-content>
+            <div class="student-info">
+              <div class="student-name">{{ student.firstName }} {{ student.lastName }}</div>
+              <div class="student-details">
+                <span><strong>INE:</strong> {{ student.ine }}</span>
+                <span><strong>Formation:</strong> {{ student.formation }}</span>
+                <span><strong>Promotion:</strong> {{ student.promotion }}</span>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-card-content>
+  </mat-card>
+  
+  <div *ngIf="loading" class="spinner-container">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+  
+  <ng-container *ngIf="!loading && studentData">
+    <div class="profile-content">
+      <mat-card class="profile-card">
+        <mat-card-header>
+          <mat-card-title>
+            <div class="title-row">
+              <h2>Informations Personnelles</h2>
+              <button *ngIf="formMode === 'view'" mat-icon-button color="primary" (click)="switchToEditMode()" [disabled]="!isAdmin && !isStudent">
+                <mat-icon>edit</mat-icon>
+              </button>
+            </div>
+          </mat-card-title>
+        </mat-card-header>
+        
+        <mat-card-content>
+          <ng-container *ngIf="formMode === 'view'">
+            <div class="info-grid">
+              <div class="info-item">
+                <div class="info-label">INE (Identifiant National Étudiant)</div>
+                <div class="info-value">{{ studentData.ine }}</div>
+              </div>
+              
+              <div class="info-item">
+                <div class="info-label">Nom</div>
+                <div class="info-value">{{ studentData.lastName }}</div>
+              </div>
+              
+              <div class="info-item">
+                <div class="info-label">Prénom</div>
+                <div class="info-value">{{ studentData.firstName }}</div>
+              </div>
+              
+              <div class="info-item">
+                <div class="info-label">Date de naissance</div>
+                <div class="info-value">{{ studentData.dateOfBirth | date:'dd/MM/yyyy' }}</div>
+              </div>
+              
+              <div class="info-item">
+                <div class="info-label">Email</div>
+                <div class="info-value">{{ studentData.email }}</div>
+              </div>
+              
+              <div class="info-item">
+                <div class="info-label">Téléphone</div>
+                <div class="info-value">{{ studentData.phoneNumber || 'Non renseigné' }}</div>
+              </div>
+              
+              <div class="info-item">
+                <div class="info-label">Formation</div>
+                <div class="info-value">{{ studentData.formation }}</div>
+              </div>
+              
+              <div class="info-item">
+                <div class="info-label">Promotion</div>
+                <div class="info-value">{{ studentData.promotion }}</div>
+              </div>
+              
+              <div class="info-item">
+                <div class="info-label">Année de début</div>
+                <div class="info-value">{{ studentData.startYear }}</div>
+              </div>
+              
+              <div class="info-item">
+                <div class="info-label">Année de fin</div>
+                <div class="info-value">{{ studentData.endYear || 'En cours' }}</div>
+              </div>
+            </div>
+          </ng-container>
+          
+          <form *ngIf="formMode === 'edit'" [formGroup]="studentForm" (ngSubmit)="onSubmit()" class="edit-form">
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>INE</mat-label>
+                <input matInput formControlName="ine">
+                <mat-error *ngIf="studentForm.get('ine')?.hasError('required')">
+                  L'INE est requis
+                </mat-error>
+              </mat-form-field>
+              
+              <mat-form-field appearance="outline">
+                <mat-label>Nom</mat-label>
+                <input matInput formControlName="lastName">
+                <mat-error *ngIf="studentForm.get('lastName')?.hasError('required')">
+                  Le nom est requis
+                </mat-error>
+              </mat-form-field>
+            </div>
+            
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Prénom</mat-label>
+                <input matInput formControlName="firstName">
+                <mat-error *ngIf="studentForm.get('firstName')?.hasError('required')">
+                  Le prénom est requis
+                </mat-error>
+              </mat-form-field>
+              
+              <mat-form-field appearance="outline">
+                <mat-label>Date de naissance</mat-label>
+                <input matInput [matDatepicker]="picker" formControlName="dateOfBirth">
+                <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-datepicker #picker></mat-datepicker>
+                <mat-error *ngIf="studentForm.get('dateOfBirth')?.hasError('required')">
+                  La date de naissance est requise
+                </mat-error>
+              </mat-form-field>
+            </div>
+            
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Email</mat-label>
+                <input matInput formControlName="email" type="email">
+                <mat-error *ngIf="studentForm.get('email')?.hasError('required')">
+                  L'email est requis
+                </mat-error>
+                <mat-error *ngIf="studentForm.get('email')?.hasError('email')">
+                  Format d'email invalide
+                </mat-error>
+              </mat-form-field>
+              
+              <mat-form-field appearance="outline">
+                <mat-label>Téléphone</mat-label>
+                <input matInput formControlName="phoneNumber">
+                <mat-error *ngIf="studentForm.get('phoneNumber')?.hasError('pattern')">
+                  Format de téléphone invalide
+                </mat-error>
+              </mat-form-field>
+            </div>
+            
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Formation</mat-label>
+                <input matInput formControlName="formation">
+                <mat-error *ngIf="studentForm.get('formation')?.hasError('required')">
+                  La formation est requise
+                </mat-error>
+              </mat-form-field>
+              
+              <mat-form-field appearance="outline">
+                <mat-label>Promotion</mat-label>
+                <input matInput formControlName="promotion">
+                <mat-error *ngIf="studentForm.get('promotion')?.hasError('required')">
+                  La promotion est requise
+                </mat-error>
+              </mat-form-field>
+            </div>
+            
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Année de début</mat-label>
+                <input matInput type="number" formControlName="startYear">
+                <mat-error *ngIf="studentForm.get('startYear')?.hasError('required')">
+                  L'année de début est requise
+                </mat-error>
+              </mat-form-field>
+              
+              <mat-form-field appearance="outline">
+                <mat-label>Année de fin</mat-label>
+                <input matInput type="number" formControlName="endYear">
+              </mat-form-field>
+            </div>
+            
+            <div class="form-actions">
+              <button mat-raised-button color="primary" type="submit" [disabled]="studentForm.invalid">
+                Enregistrer
+              </button>
+              <button mat-button type="button" (click)="cancelEdit()">
+                Annuler
+              </button>
+            </div>
+          </form>
+        </mat-card-content>
+      </mat-card>
+      
+      <mat-card class="courses-card">
+        <mat-card-header>
+          <mat-card-title>Cours Suivis</mat-card-title>
+        </mat-card-header>
+        
+        <mat-card-content>
+          <div *ngIf="courses.length === 0" class="empty-state">
+            Aucun cours actuellement suivi.
+          </div>
+          
+          <mat-accordion *ngIf="courses.length > 0">
+            <mat-expansion-panel *ngFor="let course of courses">
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  {{ course.title }}
+                </mat-panel-title>
+                <mat-panel-description>
+                  {{ course.startDate | date:'dd/MM/yyyy' }} - {{ course.endDate | date:'dd/MM/yyyy' }}
+                </mat-panel-description>
+              </mat-expansion-panel-header>
+              <div class="course-details">
+                <p><strong>Formateur:</strong> {{ course.instructorName }}</p>
+                <p><strong>Lieu:</strong> {{ course.location }}</p>
+                <p *ngIf="course.description"><strong>Description:</strong> {{ course.description }}</p>
+              </div>
+            </mat-expansion-panel>
+          </mat-accordion>
+        </mat-card-content>
+      </mat-card>
+      
+      <mat-card class="diplomas-card">
+        <mat-card-header>
+          <mat-card-title>Diplômes Obtenus</mat-card-title>
+        </mat-card-header>
+        
+        <mat-card-content>
+          <div *ngIf="diplomas.length === 0" class="empty-state">
+            Aucun diplôme enregistré.
+          </div>
+          
+          <div *ngIf="diplomas.length > 0" class="diplomas-list">
+            <div *ngFor="let diploma of diplomas" class="diploma-item">
+              <div class="diploma-title">{{ diploma.title }}</div>
+              <div class="diploma-date">Obtenu le: {{ diploma.obtainedDate | date:'dd/MM/yyyy' }}</div>
+              <div class="diploma-institution">{{ diploma.institution }}</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+      
+      <mat-card class="other-trainings-card">
+        <mat-card-header>
+          <mat-card-title>Autres Formations</mat-card-title>
+        </mat-card-header>
+        
+        <mat-card-content>
+          <div *ngIf="otherTrainings.length === 0" class="empty-state">
+            Aucune autre formation enregistrée.
+          </div>
+          
+          <div *ngIf="otherTrainings.length > 0" class="trainings-list">
+            <div *ngFor="let training of otherTrainings" class="training-item">
+              <div class="training-title">{{ training.title }}</div>
+              <div class="training-period">{{ training.startDate | date:'MM/yyyy' }} - {{ training.endDate | date:'MM/yyyy' }}</div>
+              <div class="training-provider">{{ training.provider }}</div>
+              <div class="training-description">{{ training.description }}</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </ng-container>
+  
+  <div *ngIf="!loading && !studentData && !isAdmin" class="empty-profile">
+    <mat-card>
+      <mat-card-content>
+        <div class="empty-message">
+          <mat-icon>error_outline</mat-icon>
+          <p>Aucun profil étudiant trouvé.</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

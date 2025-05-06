@@ -1,0 +1,153 @@
+<div class="document-management-container">
+  <h1 class="page-title">Gestion Documentaire</h1>
+  
+  <mat-card>
+    <mat-card-content>
+      <mat-tab-group [(selectedIndex)]="activeTab" (selectedIndexChange)="onTabChange($event)">
+        <mat-tab label="Liste des Documents">
+          <div class="filter-container">
+            <mat-form-field appearance="outline">
+              <mat-label>Filtrer</mat-label>
+              <input matInput (keyup)="applyFilter($event)" placeholder="Ex. Courrier...">
+              <mat-icon matSuffix>search</mat-icon>
+            </mat-form-field>
+          </div>
+          
+          <div *ngIf="loading" class="spinner-container">
+            <mat-spinner diameter="40"></mat-spinner>
+          </div>
+          
+          <div *ngIf="!loading" class="table-container">
+            <table mat-table [dataSource]="dataSource" matSort>
+              <!-- Title Column -->
+              <ng-container matColumnDef="title">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header> Titre </th>
+                <td mat-cell *matCellDef="let document"> {{ document.title }} </td>
+              </ng-container>
+              
+              <!-- Type Column -->
+              <ng-container matColumnDef="type">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header> Type </th>
+                <td mat-cell *matCellDef="let document"> {{ getDocumentTypeName(document.type) }} </td>
+              </ng-container>
+              
+              <!-- Creation Date Column -->
+              <ng-container matColumnDef="creationDate">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header> Date de Création </th>
+                <td mat-cell *matCellDef="let document"> {{ document.creationDate | date:'dd/MM/yyyy' }} </td>
+              </ng-container>
+              
+              <!-- Creator Column -->
+              <ng-container matColumnDef="creator">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header> Créé par </th>
+                <td mat-cell *matCellDef="let document"> {{ document.creatorName }} </td>
+              </ng-container>
+              
+              <!-- Actions Column -->
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef> Actions </th>
+                <td mat-cell *matCellDef="let document"> 
+                  <button mat-icon-button color="primary" (click)="editDocument(document)">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" (click)="deleteDocument(document.id)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
+              
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+              
+              <!-- Row shown when there is no matching data -->
+              <tr class="mat-row" *matNoDataRow>
+                <td class="mat-cell" colspan="5">Aucun document trouvé</td>
+              </tr>
+            </table>
+            
+            <mat-paginator [pageSizeOptions]="[5, 10, 25, 100]" showFirstLastButtons></mat-paginator>
+          </div>
+          
+          <div class="action-buttons">
+            <button mat-raised-button color="primary" (click)="activeTab = 1">
+              <mat-icon>add</mat-icon> Nouveau Document
+            </button>
+          </div>
+        </mat-tab>
+        
+        <mat-tab label="Nouveau Document">
+          <form [formGroup]="documentForm" (ngSubmit)="onSubmit()" class="document-form">
+            <h2>{{ formMode === 'create' ? 'Nouveau Document' : 'Modifier Document' }}</h2>
+            
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="form-field">
+                <mat-label>Titre</mat-label>
+                <input matInput formControlName="title" placeholder="Titre du document">
+                <mat-error *ngIf="documentForm.get('title')?.hasError('required')">
+                  Le titre est requis
+                </mat-error>
+              </mat-form-field>
+              
+              <mat-form-field appearance="outline" class="form-field">
+                <mat-label>Type de Document</mat-label>
+                <mat-select formControlName="type">
+                  <mat-option *ngFor="let type of documentTypes" [value]="type.id">
+                    {{ type.label }}
+                  </mat-option>
+                </mat-select>
+                <mat-error *ngIf="documentForm.get('type')?.hasError('required')">
+                  Le type est requis
+                </mat-error>
+              </mat-form-field>
+            </div>
+            
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="form-field">
+                <mat-label>Référence</mat-label>
+                <input matInput formControlName="reference" placeholder="Référence du document">
+              </mat-form-field>
+              
+              <mat-form-field appearance="outline" class="form-field">
+                <mat-label>Visible par</mat-label>
+                <mat-select formControlName="visibleTo" multiple>
+                  <mat-option value="ROLE_ADMIN">Administrateurs</mat-option>
+                  <mat-option value="ROLE_ADMINISTRATIVE">Personnel Administratif</mat-option>
+                  <mat-option value="ROLE_INSTRUCTOR">Enseignants</mat-option>
+                  <mat-option value="ROLE_STUDENT">Étudiants</mat-option>
+                </mat-select>
+                <mat-error *ngIf="documentForm.get('visibleTo')?.hasError('required')">
+                  Vous devez spécifier qui peut voir ce document
+                </mat-error>
+              </mat-form-field>
+            </div>
+            
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Description</mat-label>
+              <textarea matInput formControlName="description" rows="2" placeholder="Description brève du document"></textarea>
+            </mat-form-field>
+            
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Contenu</mat-label>
+              <textarea matInput formControlName="content" rows="10" placeholder="Contenu du document"></textarea>
+              <mat-error *ngIf="documentForm.get('content')?.hasError('required')">
+                Le contenu est requis
+              </mat-error>
+            </mat-form-field>
+            
+            <div class="form-actions">
+              <button mat-raised-button color="primary" type="submit" [disabled]="documentForm.invalid">
+                {{ formMode === 'create' ? 'Enregistrer' : 'Mettre à jour' }}
+              </button>
+              <button mat-button type="button" (click)="resetForm()">
+                Réinitialiser
+              </button>
+              <button mat-button type="button" (click)="activeTab = 0">
+                Annuler
+              </button>
+            </div>
+          </form>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-card-content>
+  </mat-card>
+</div>

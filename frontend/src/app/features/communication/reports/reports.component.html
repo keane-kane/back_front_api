@@ -1,0 +1,146 @@
+<div class="reports-container">
+  <h1 class="page-title">Gestion des Comptes Rendus</h1>
+  
+  <div class="reports-content">
+    <div class="form-section">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>{{ formMode === 'create' ? 'Nouveau Compte Rendu' : 'Éditer Compte Rendu' }}</mat-card-title>
+        </mat-card-header>
+        
+        <mat-card-content>
+          <form [formGroup]="reportForm" (ngSubmit)="onSubmit()">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Titre</mat-label>
+              <input matInput formControlName="title" placeholder="Titre du compte rendu">
+              <mat-error *ngIf="reportForm.get('title')?.hasError('required')">
+                Le titre est requis
+              </mat-error>
+            </mat-form-field>
+            
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Type</mat-label>
+              <mat-select formControlName="type">
+                <mat-option *ngFor="let type of reportTypes" [value]="type.id">
+                  {{ type.label }}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="reportForm.get('type')?.hasError('required')">
+                Le type est requis
+              </mat-error>
+            </mat-form-field>
+            
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Date</mat-label>
+              <input matInput [matDatepicker]="picker" formControlName="date">
+              <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+              <mat-datepicker #picker></mat-datepicker>
+              <mat-error *ngIf="reportForm.get('date')?.hasError('required')">
+                La date est requise
+              </mat-error>
+            </mat-form-field>
+            
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Participants</mat-label>
+              <input matInput formControlName="participants" placeholder="Liste des participants">
+            </mat-form-field>
+            
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Contenu</mat-label>
+              <textarea matInput formControlName="content" rows="6" placeholder="Contenu du compte rendu"></textarea>
+              <mat-error *ngIf="reportForm.get('content')?.hasError('required')">
+                Le contenu est requis
+              </mat-error>
+            </mat-form-field>
+            
+            <div class="form-actions">
+              <button mat-raised-button color="primary" type="submit" [disabled]="reportForm.invalid">
+                {{ formMode === 'create' ? 'Enregistrer' : 'Mettre à jour' }}
+              </button>
+              <button mat-button type="button" (click)="resetForm()" *ngIf="formMode === 'edit'">
+                Annuler
+              </button>
+            </div>
+          </form>
+        </mat-card-content>
+      </mat-card>
+    </div>
+    
+    <div class="list-section">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Liste des Comptes Rendus</mat-card-title>
+          <div class="filter-container">
+            <mat-form-field appearance="outline">
+              <mat-label>Filtrer</mat-label>
+              <input matInput (keyup)="applyFilter($event)" placeholder="Ex. Réunion">
+            </mat-form-field>
+          </div>
+        </mat-card-header>
+        
+        <mat-card-content>
+          <div *ngIf="loading" class="spinner-container">
+            <mat-spinner diameter="40"></mat-spinner>
+          </div>
+          
+          <div *ngIf="!loading" class="table-container">
+            <table mat-table [dataSource]="dataSource" matSort>
+              <!-- Title Column -->
+              <ng-container matColumnDef="title">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header> Titre </th>
+                <td mat-cell *matCellDef="let report"> {{ report.title }} </td>
+              </ng-container>
+              
+              <!-- Type Column -->
+              <ng-container matColumnDef="type">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
+                <td mat-cell *matCellDef="let report">  <!-- Type Column -->
+                  <ng-container matColumnDef="type">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
+                    <td mat-cell *matCellDef="let report">
+                      {{  report.type }}
+                    </td>
+                  </ng-container></td>
+              </ng-container>
+              
+              <!-- Date Column -->
+              <ng-container matColumnDef="date">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header> Date </th>
+                <td mat-cell *matCellDef="let report"> {{ report.date | date:'dd/MM/yyyy' }} </td>
+              </ng-container>
+              
+              <!-- Created By Column -->
+              <ng-container matColumnDef="createdBy">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header> Créé par </th>
+                <td mat-cell *matCellDef="let report"> {{ report.createdByName }} </td>
+              </ng-container>
+              
+              <!-- Actions Column -->
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef> Actions </th>
+                <td mat-cell *matCellDef="let report"> 
+                  <button mat-icon-button color="primary" (click)="editReport(report)" *ngIf="canEdit(report)">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" (click)="deleteReport(report.id)" *ngIf="canEdit(report)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
+              
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+              
+              <!-- Row shown when there is no matching data -->
+              <tr class="mat-row" *matNoDataRow>
+                <td class="mat-cell" colspan="5">Aucun compte rendu trouvé</td>
+              </tr>
+            </table>
+            
+            <mat-paginator [pageSizeOptions]="[5, 10, 25, 100]" showFirstLastButtons></mat-paginator>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>

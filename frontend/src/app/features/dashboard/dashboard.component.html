@@ -1,0 +1,133 @@
+<div class="dashboard-container">
+  <h1 class="page-title">Tableau de Bord</h1>
+  
+  <div *ngIf="loading">
+    <mat-spinner diameter="40" class="spinner"></mat-spinner>
+  </div>
+  
+  <div *ngIf="!loading" class="dashboard-content">
+    <div class="welcome-card">
+      <mat-card>
+        <mat-card-content>
+          <h2>Bienvenue, {{ currentUser?.fullName || 'Utilisateur' }}</h2>
+          <p>{{ currentUser?.roles?.join(', ') }}</p>
+        </mat-card-content>
+      </mat-card>
+    </div>
+    
+    <!-- Admin & Administrative Dashboard -->
+    <div *ngIf="currentUser?.isAdmin || currentUser?.isAdministrative" class="dashboard-section">
+      <div class="stats-container">
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <div class="stat-value">{{ statistics.studentsCount || 0 }}</div>
+            <div class="stat-label">Étudiants</div>
+          </mat-card-content>
+        </mat-card>
+        
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <div class="stat-value">{{ statistics.instructorsCount || 0 }}</div>
+            <div class="stat-label">Formateurs</div>
+          </mat-card-content>
+        </mat-card>
+        
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <div class="stat-value">{{ statistics.activeCoursesCount || 0 }}</div>
+            <div class="stat-label">Cours Actifs</div>
+          </mat-card-content>
+        </mat-card>
+        
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <div class="stat-value">{{ statistics.documentsCount || 0 }}</div>
+            <div class="stat-label">Documents</div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+      
+      <div class="recent-reports">
+        <h2>Rapports Récents</h2>
+        <mat-card *ngIf="recentReports.length === 0">
+          <mat-card-content>
+            <p>Aucun rapport récent</p>
+          </mat-card-content>
+        </mat-card>
+        
+        <mat-card *ngFor="let report of recentReports">
+          <mat-card-content>
+            <h3>{{ report.title }}</h3>
+            <p class="report-date">{{ report.date | date:'dd/MM/yyyy' }}</p>
+            <p>{{ report.summary }}</p>
+            <button mat-button color="primary">Voir Détails</button>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+    
+    <!-- Instructor Dashboard -->
+    <div *ngIf="currentUser?.isInstructor" class="dashboard-section">
+      <div class="upcoming-events">
+        <h2>Cours à Venir</h2>
+        <mat-card *ngIf="upcomingEvents.length === 0">
+          <mat-card-content>
+            <p>Aucun cours programmé</p>
+          </mat-card-content>
+        </mat-card>
+        
+        <mat-card *ngFor="let event of upcomingEvents">
+          <mat-card-content>
+            <h3>{{ event.title }}</h3>
+            <p><strong>Date:</strong> {{ event.date | date:'dd/MM/yyyy HH:mm' }}</p>
+            <p><strong>Lieu:</strong> {{ event.location }}</p>
+            <p><strong>Formation:</strong> {{ event.training }}</p>
+            <button mat-button color="primary">Détails</button>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+    
+    <!-- Student Dashboard -->
+    <div *ngIf="currentUser?.isStudent" class="dashboard-section">
+      <div class="upcoming-events">
+        <h2>Emploi du Temps</h2>
+        <mat-card *ngIf="upcomingEvents.length === 0">
+          <mat-card-content>
+            <p>Aucun cours programmé</p>
+          </mat-card-content>
+        </mat-card>
+        
+        <mat-card *ngFor="let event of upcomingEvents">
+          <mat-card-content>
+            <h3>{{ event.title }}</h3>
+            <p><strong>Date:</strong> {{ event.date | date:'dd/MM/yyyy HH:mm' }}</p>
+            <p><strong>Enseignant:</strong> {{ event.instructor }}</p>
+            <p><strong>Lieu:</strong> {{ event.location }}</p>
+            <button mat-button color="primary">Détails</button>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+    
+    <!-- Default Dashboard for other roles -->
+    <div *ngIf="!currentUser?.isAdmin && !currentUser?.isAdministrative && !currentUser?.isInstructor && !currentUser?.isStudent" class="dashboard-section">
+      <div class="announcements">
+        <h2>Annonces</h2>
+        <mat-card *ngIf="recentReports.length === 0">
+          <mat-card-content>
+            <p>Aucune annonce</p>
+          </mat-card-content>
+        </mat-card>
+        
+        <mat-card *ngFor="let report of recentReports">
+          <mat-card-content>
+            <h3>{{ report.title }}</h3>
+            <p class="report-date">{{ report.date | date:'dd/MM/yyyy' }}</p>
+            <p>{{ report.content }}</p>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </div>
+</div>

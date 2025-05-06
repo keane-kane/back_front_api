@@ -1,0 +1,54 @@
+.sidebar-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.logo-container {
+  padding: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(26, 35, 126, 0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  
+  .university-logo {
+    display: flex;
+    align-items: center;
+    
+    .logo-icon {
+      color: #1a237e;
+      font-size: 28px;
+      height: 28px;
+      width: 28px;
+    }
+    
+    .logo-text {
+      margin-left: 12px;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1a237e;
+    }
+  }
+}
+
+.nav-list {
+  .active-link {
+    background-color: rgba(26, 35, 126, 0.1);
+    color: #1a237e;
+    font-weight: 500;
+    
+    mat-icon {
+      color: #1a237e;
+    }
+  }
+  
+  a {
+    border-radius: 4px;
+    margin: 4px 8px;
+    
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+  }
+}
